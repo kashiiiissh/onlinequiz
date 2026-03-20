@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${quiz.title}">Quiz</title>
+</head>
+<body>
+
+<h2 th:text="${quiz.title}">Quiz Title</h2>
+
+<p>Time left: <span id="timer"></span></p>
+
+<form th:action="@{'/quizzes/' + ${quiz.id} + '/submit'}" method="post" id="quizForm">
+
+    <div th:each="q, stat : ${quiz.questions}">
+        <p><b>Q<span th:text="${stat.index + 1}"></span>:</b> <span th:text="${q.content}"></span></p>
+
+        <!-- Use div wrapper for th:switch -->
+        <div th:switch="${q.type}">
+
+            <!-- MCQ with 4 options -->
+            <div th:case="${T(com.quizapp.onlinequiz.entity.QuestionType).MCQ}" th:if="${q.options != null}">
+                <div th:each="opt, iterStat : ${q.options}">
+                    <input type="radio"
+                           th:id="${'q' + q.id + '_' + iterStat.index}"
+                           th:name="${'q' + q.id}"
+                           th:value="${opt}" />
+                    <label th:for="${'q' + q.id + '_' + iterStat.index}" th:text="${opt}">Option</label><br/>
+                </div>
+            </div>
+
+            <!-- True/False -->
+            <div th:case="${T(com.quizapp.onlinequiz.entity.QuestionType).TRUE_FALSE}">
+                <input type="radio" th:name="${'q' + q.id}" value="true" th:id="${'q' + q.id + '_true'}"/>
+                <label th:for="${'q' + q.id + '_true'}">True</label><br/>
+                <input type="radio" th:name="${'q' + q.id}" value="false" th:id="${'q' + q.id + '_false'}"/>
+                <label th:for="${'q' + q.id + '_false'}">False</label><br/>
+            </div>
+
+            <!-- Short Answer -->
+            <div th:case="${T(com.quizapp.onlinequiz.entity.QuestionType).SHORT_ANSWER}">
+                <input type="text" th:name="${'q' + q.id}" placeholder="Type your answer here"/><br/>
+            </div>
+
+            <!-- Fallback -->
+            <div th:case="*">
+                <p>Question type not supported</p>
+            </div>
+
+        </div>
+
+        <hr/>
+    </div>
+
+    <button type="submit">Submit Quiz</button>
+</form>
+
+<script>
+    let time = [[${quiz.duration}]] * 60;
+    let timerElem = document.getElementById('timer');
+    let form = document.getElementById('quizForm');
+
+    let interval = setInterval(() => {
+        let minutes = Math.floor(time / 60);
+        let seconds = time % 60;
+        timerElem.textContent = minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        time--;
+        if(time < 0) {
+            clearInterval(interval);
+            alert("Time is up! Quiz will be submitted automatically.");
+            form.submit();
+        }
+    }, 1000);
+</script>
+
+</body>
+</html>
